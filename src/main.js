@@ -6,7 +6,6 @@ const path = require('path');
 const dotenv = require('dotenv');
 const tray = require('./application/tray');
 const AutoLaunch = require('auto-launch');
-// const log = require('electron-log');
 const {autoUpdater} = require("electron-updater");
 const config = require('./config');
 require('./application/menus/toolbar');
@@ -19,20 +18,6 @@ const autoLaunch = new AutoLaunch({
 
 dotenv.config();
 
-//-------------------------------------------------------------------
-// Logging
-//
-// THIS SECTION IS NOT REQUIRED
-//
-// This logging setup is not required for auto-updates to work,
-// but it sure makes debugging easier :)
-//-------------------------------------------------------------------
-// autoUpdater.logger = log;
-// autoUpdater.logger.transports.file.level = 'info';
-// log.info('App starting...');
-
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
 function createWindow() {
@@ -133,24 +118,19 @@ function initBadge() {
 
 
 function sendStatusToWindow(text) {
-  // log.info(text);
   mainWindow.webContents.send('message', text);
 }
 autoUpdater.on('checking-for-update', () => {
   sendStatusToWindow('Checking for update...');
-  // log.info('Checking for update...');
 })
 autoUpdater.on('update-available', (info) => {
   sendStatusToWindow('Update available.');
-  // log.info('Update available.');
 })
 autoUpdater.on('update-not-available', (info) => {
   sendStatusToWindow('Update not available.');
-  // log.info('Update not available.');
 })
 autoUpdater.on('error', (err) => {
   sendStatusToWindow('Error in auto-updater. ' + err);
-  // log.info('Error in auto-updater. ');
 })
 autoUpdater.on('download-progress', (progressObj) => {
   let log_message = "Download speed: " + progressObj.bytesPerSecond;

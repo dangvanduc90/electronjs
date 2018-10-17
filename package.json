@@ -1,6 +1,6 @@
 {
   "name": "electron-quick-start",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A minimal Electron application",
   "main": "src/main.js",
   "scripts": {
@@ -34,7 +34,7 @@
     "nodemon": "^1.18.4"
   },
   "build": {
-    "appId": "com.github.iffy.electronupdaterexample",
+    "appId": "com.github.dangvanduc90.electronjs",
     "publish": [
       {
         "provider": "github",
