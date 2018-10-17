@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Ticket Platform</title>
+    <link rel="stylesheet" href="../assets/css/index.css">
+  </head>
+  <body>
+    <!-- <webview id="frontend" class="full-view" preload="./renderer.js" src="http://staging.frontend.ticket.platform.vn"></webview> -->
+    <script>
+      const {ipcRenderer} = require('electron');
+      ipcRenderer.on('alerting',(event, selector) => {
+          alert(selector);
+      });
+    </script>
+  </body>
+</html>
