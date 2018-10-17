@@ -6,6 +6,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 const tray = require('./application/tray');
 const AutoLaunch = require('auto-launch');
+const log = require('electron-log');
+const {autoUpdater} = require("electron-updater");
 const config = require('./config');
 require('./application/menus/toolbar');
 const Badge = require('electron-windows-badge');
@@ -16,6 +18,18 @@ const autoLaunch = new AutoLaunch({
 });
 
 dotenv.config();
+
+//-------------------------------------------------------------------
+// Logging
+//
+// THIS SECTION IS NOT REQUIRED
+//
+// This logging setup is not required for auto-updates to work,
+// but it sure makes debugging easier :)
+//-------------------------------------------------------------------
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+log.info('App starting...');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -86,6 +100,8 @@ app.on('ready', () => {
   autoLaunch.isEnabled().then((isEnabled) => {
     if (!isEnabled) autoLaunch.enable();
   });
+  
+  autoUpdater.checkForUpdates();
 })
 
 // Quit when all windows are closed.
@@ -114,3 +130,35 @@ function initBadge() {
   mainWindow.once('focus', () => mainWindow.flashFrame(false))
   mainWindow.flashFrame(true)
 }
+
+
+function sendStatusToWindow(text) {
+  log.info(text);
+  win.webContents.send('message', text);
+}
+autoUpdater.on('checking-for-update', () => {
+  sendStatusToWindow('Checking for update...');
+  log.info('Checking for update...');
+})
+autoUpdater.on('update-available', (info) => {
+  sendStatusToWindow('Update available.');
+  log.info('Update available.');
+})
+autoUpdater.on('update-not-available', (info) => {
+  sendStatusToWindow('Update not available.');
+  log.info('Update not available.');
+})
+autoUpdater.on('error', (err) => {
+  sendStatusToWindow('Error in auto-updater. ' + err);
+  log.info('Error in auto-updater. ');
+})
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  sendStatusToWindow(log_message);
+})
+autoUpdater.on('update-downloaded', (info) => {
+  sendStatusToWindow('Update downloaded');
+  autoUpdater.quitAndInstall()
+});
