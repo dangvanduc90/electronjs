@@ -6,10 +6,12 @@ const path = require('path');
 const dotenv = require('dotenv');
 const tray = require('./application/tray');
 const AutoLaunch = require('auto-launch');
-const {autoUpdater} = require("electron-updater");
+const { autoUpdater } = require("electron-updater");
 const config = require('./config');
 require('./application/menus/toolbar');
 const Badge = require('electron-windows-badge');
+const { dialog } = require('electron')
+const isDev = require('electron-is-dev');
 
 const autoLaunch = new AutoLaunch({
   name: 'Ticket Platform',
@@ -21,6 +23,7 @@ dotenv.config();
 let mainWindow;
 
 function createWindow() {
+
   mainWindow = new BrowserWindow({
     width: 1366, height: 768,
     icon: path.join(__dirname, '../assets/img/ticket-icon.png'),
@@ -51,7 +54,7 @@ function createWindow() {
   });
 
   ipc.on("receiveTotalNotifications", (e, args) => {
-    new Badge(mainWindow, {font: '32px arial'});
+    new Badge(mainWindow, { font: '32px arial' });
   });
 
   ipc.on("receiveNotification", (event, args) => {
@@ -85,7 +88,7 @@ app.on('ready', () => {
   autoLaunch.isEnabled().then((isEnabled) => {
     if (!isEnabled) autoLaunch.enable();
   });
-  
+
   autoUpdater.checkForUpdates();
 })
 
@@ -108,7 +111,7 @@ app.on('activate', function () {
 
 function initBadge() {
   const badgeOptions = {
-    font:	'32px arial'
+    font: '32px arial'
   };
   new Badge(mainWindow, badgeOptions);
 
@@ -116,13 +119,20 @@ function initBadge() {
   mainWindow.flashFrame(true)
 }
 
-
 function sendStatusToWindow(text) {
   mainWindow.webContents.send('message', text);
 }
 autoUpdater.on('checking-for-update', () => {
+  if (isDev) {
+    console.log('Running in development');
+    sendStatusToWindow('Running in development');
+  } else {
+    console.log('Running in production');
+    sendStatusToWindow('Running in production');
+  }
   sendStatusToWindow('Checking for update...');
 })
+
 autoUpdater.on('update-available', (info) => {
   sendStatusToWindow('Update available.');
 })
@@ -137,8 +147,43 @@ autoUpdater.on('download-progress', (progressObj) => {
   log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
   log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
   sendStatusToWindow(log_message);
+
+  if (mainWindow != null) mainWindow.setProgressBar(progressObj.percent / 100)
 })
 autoUpdater.on('update-downloaded', (info) => {
   sendStatusToWindow('Update downloaded');
-  autoUpdater.quitAndInstall()
+  if (mainWindow != null) mainWindow.setProgressBar(0)
+
+  let title = 'Cập nhật phiên bản mới';
+  let message = 'Phiên bản hiện tại là ' + autoUpdater.currentVersion + ' phiên bản mới nhất là ' + info.version;
+
+  const trayIconDefault = path.join(__dirname, '../assets/img/question_doubt_red.png')
+  const options = {
+    type: 'question',
+    icon: trayIconDefault,
+    title: title,
+    buttons: ['Cập nhật', 'Không'],
+    message: message,
+    defaultId: 0,
+    cancelId: 1 // press esc key
+  }
+  dialog.showMessageBox(options, (index) => {
+    if (index === 0) { // Cập nhật
+      autoUpdater.quitAndInstall()
+    }
+  })
+
+  // ========== NOTIFY SECTION ==========
+  // notifier.notify({
+  //   title: title,
+  //   message: message + '. Bấm để cập nhật',
+  //   sound: true,
+  //   wait: true
+  // }, function (err, res) {
+  //   // console.log(err, res);
+  // });
+
+  // notifier.on("click", () => {
+  //   autoUpdater.quitAndInstall()
+  // });
 });
