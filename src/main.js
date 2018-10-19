@@ -89,6 +89,7 @@ app.on('ready', () => {
     if (!isEnabled) autoLaunch.enable();
   });
 
+  autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.checkForUpdates();
 })
 
